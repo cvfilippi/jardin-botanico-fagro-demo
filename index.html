@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Jardín Botánico FAgro · Juego demo</title>
+  <meta name="description" content="Prototipo jugable de recorrido botánico con mapa, QR, plantas y quiz." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#2f5d43" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQbnPa8Czt4t9DHIv4dEIRiBz+BifsA=" crossorigin="" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Prototipo jugable</p>
+        <h1>Jardín Botánico FAgro</h1>
+      </div>
+      <button id="openHelpBtn" class="ghost-btn" type="button" aria-label="Abrir ayuda">?</button>
+    </header>
+
+    <main class="layout">
+      <section class="map-panel" aria-label="Mapa del recorrido">
+        <div id="map"></div>
+        <div class="map-overlay top-left">
+          <button id="demoModeBtn" class="primary-btn" type="button">Modo demo sin GPS</button>
+          <button id="gpsBtn" class="secondary-btn" type="button">Usar GPS real</button>
+        </div>
+        <div class="map-overlay bottom-left status-card" id="targetStatus">
+          <strong>Objetivo:</strong> elegí una planta para empezar.
+        </div>
+      </section>
+
+      <aside class="side-panel" aria-label="Panel del juego">
+        <section class="player-card card">
+          <div class="player-topline">
+            <div>
+              <p class="eyebrow">Jugador/a</p>
+              <h2 id="playerNameLabel">Visitante</h2>
+            </div>
+            <button id="editNameBtn" class="small-btn" type="button">Editar</button>
+          </div>
+          <div class="score-grid">
+            <div><span id="visitedCount">0</span><small>visitadas</small></div>
+            <div><span id="scoreCount">0</span><small>puntos</small></div>
+            <div><span id="answeredCount">0</span><small>quiz</small></div>
+          </div>
+          <div class="progress-wrap" aria-label="Progreso del recorrido">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+          <div class="card-actions">
+            <button id="nextMissionBtn" class="secondary-btn" type="button">Siguiente misión</button>
+            <button id="resetBtn" class="danger-btn" type="button">Reiniciar</button>
+          </div>
+        </section>
+
+        <section class="card intro-card" id="introCard">
+          <h2>Cómo probarlo ahora</h2>
+          <p>Usá <strong>Modo demo sin GPS</strong>, elegí una planta, tocá <strong>Caminar hasta aquí</strong> y luego <strong>Escanear QR demo</strong>. Así probás el flujo completo sin moverte ni prender ubicación.</p>
+        </section>
+
+        <section class="card mission-card" id="missionCard">
+          <p class="eyebrow">Misión actual</p>
+          <h2 id="missionTitle">Sin planta seleccionada</h2>
+          <p id="missionText">Seleccioná una planta en el mapa o en la lista.</p>
+          <div class="mission-actions">
+            <button id="walkToTargetBtn" class="primary-btn" type="button" disabled>Caminar hasta aquí</button>
+            <button id="scanTargetBtn" class="secondary-btn" type="button" disabled>Escanear QR demo</button>
+          </div>
+        </section>
+
+        <section class="card plant-card" id="plantDetail" hidden>
+          <div class="plant-heading">
+            <div>
+              <p id="plantTheme" class="tag">Tema</p>
+              <h2 id="plantCommonName"></h2>
+              <p id="plantScientificName" class="scientific"></p>
+            </div>
+            <span id="plantStatusBadge" class="status-badge">Pendiente</span>
+          </div>
+          <div id="lockedBox" class="locked-box">
+            <strong>Ficha bloqueada.</strong>
+            <p>En el jardín real se desbloquea al escanear el QR físico. En esta demo, usá el botón <strong>Escanear QR demo</strong>.</p>
+          </div>
+          <div id="unlockedBox" hidden>
+            <div id="plantImage" class="plant-image" role="img" aria-label="Ilustración de la planta"></div>
+            <p id="plantInfo"></p>
+            <div class="fun-fact">
+              <strong>Dato para mirar en campo:</strong>
+              <p id="plantClue"></p>
+            </div>
+            <div class="quiz-box">
+              <p class="eyebrow">Quiz</p>
+              <h3 id="quizQuestion"></h3>
+              <div id="quizOptions" class="quiz-options"></div>
+              <p id="quizFeedback" class="feedback"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="list-heading">
+            <h2>Plantas del recorrido</h2>
+            <span id="totalPlantsLabel">0</span>
+          </div>
+          <div id="plantList" class="plant-list"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <dialog id="helpDialog" class="help-dialog">
+    <button id="closeHelpBtn" class="close-dialog" type="button">×</button>
+    <h2>Ayuda rápida</h2>
+    <p>Este prototipo está pensado para probar la mecánica antes de tener los datos finales del jardín.</p>
+    <ol>
+      <li><strong>Modo demo sin GPS:</strong> mueve tu marcador artificialmente.</li>
+      <li><strong>Caminar hasta aquí:</strong> simula que llegaste a la planta.</li>
+      <li><strong>Escanear QR demo:</strong> desbloquea la ficha y activa el quiz.</li>
+      <li><strong>qrs.html:</strong> genera QRs de prueba para imprimir.</li>
+    </ol>
+    <p>Las coordenadas actuales son de ejemplo. Después se reemplazan por coordenadas reales de las plantas de Facultad.</p>
+  </dialog>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="data/plants.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
